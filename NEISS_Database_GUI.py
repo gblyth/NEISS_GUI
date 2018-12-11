@@ -189,7 +189,7 @@ class NEISS_Data_Requester(object):
         years = {key:value for (key,value) in self.nyears_data.items() if value.get() == 1}
         for year in years.keys():
             self.progress_str.set("Loading {0}".format(year))
-            if self.yearchecks[year].get() == 1:
+            if self.nyears_data[year].get() == 1:
                 url = 'https://www.cpsc.gov/cgibin/NEISSQuery/Data/Archived%20Data/{0}/neiss{0}.tsv'.format(year)
                 filename = self.getFile(url)
                 r_data=open(filename,'r',encoding="ISO-8859-1").readlines()
