@@ -158,7 +158,32 @@ class NEISS_Data_Requester(object):
         value=int((number/total)*100)
         self.progress2['value']=value
         self.master.update_idletasks()
-        
+
+    # Get a file based on a URL and cache it locally
+    # if already exists, we don't have to go to the web for it
+    def getFile(self,url):
+        filesize_r = requests.head(url)
+        size_b = int(filesize_r.headers['content-length'])
+        chunks = int(size_b / 1024)
+        local_filename = ".cache/"+url.split('/')[-1]
+        # Should check filesize here as well
+        if (    not os.path.isfile(local_filename)
+                or os.path.getsize(local_filename) != size_b
+            ):
+            self.progress_str.set("Downloading {0}".format(url.split('/')[-1]))
+            r = requests.get(url, stream=True)
+            if not os.path.exists(os.path.dirname(local_filename)):
+                os.makedirs(os.path.dirname(local_filename))
+            with open(local_filename,'wb') as f:
+                chunk_count = 0
+                for chunk in r.iter_content(chunk_size=1024):
+                    if chunk:
+                        f.write(chunk)
+                        chunk_count += 1
+                    if chunk_count % 1000 == 0:
+                        self.updateProgress(chunk_count,chunks)
+        return local_filename
+
     def loadFiles(self):
         self.progress_str.set("Downloading Files")
         self.master.update_idletasks()
