@@ -787,10 +787,10 @@ class NEISS_Data_Requester(object):
         myear=Menubutton(self.master, text="Years of NEISS Data", relief=RAISED)
         myear.menu=Menu(myear, tearoff=0)
         myear["menu"]=myear.menu
-        for code in self.nyears:
+        for year in self.nyears:
             var=IntVar()
-            myear.menu.add_checkbutton(label=code, variable=var)
-            self.nyears_data[code]=var
+            myear.menu.add_checkbutton(label=year, variable=var)
+            self.nyears_data[year]=var
         
         m1.grid(column=3, row=3)
         m2.grid(column=3, row=4)
