@@ -14,9 +14,12 @@ from tkinter.filedialog import askdirectory
 from tkinter import simpledialog
 from tkinter import ttk
 import datetime
+import os
 
 class NEISS_Data_Requester(object):
     def __init__(self, master):
+        self.firstyear = 1997
+        self.curyear = datetime.datetime.today().year
         self.years=[]
         self.data=[]
         self.case=[]
@@ -104,46 +107,39 @@ class NEISS_Data_Requester(object):
         self.m6i6=IntVar()
         self.m6i7=IntVar()
 
-        path="/Users/Gavin/Desktop/U of C/MScBMI 33100/Final/NEISS/diagnosis.tsv"
-        f=open(path)
-        self.diag=[]
-        self.diag_nums=[]
-        for row in f:
-            temp=row.split("\t")
-            self.diag.append("=".join(temp))
-            self.diag_nums.append(str(int(temp[0])))
-        self.diag_data={}
-        f.close()
+        path="diagnosis.tsv"
+        with open(path,'r') as f:
+            self.diag=[]
+            self.diag_nums=[]
+            for row in f:
+                temp=row.split("\t")
+                self.diag.append("=".join(temp))
+                self.diag_nums.append(str(int(temp[0])))
+            self.diag_data={}
 
-        path="/Users/Gavin/Desktop/U of C/MScBMI 33100/Final/NEISS/body_parts.tsv"
-        f=open(path)
-        self.body=[]
-        self.body_nums=[]
-        for row in f:
-            temp=row.split("\t")
-            self.body.append("=".join(temp))
-            self.body_nums.append(str(int(temp[0])))
-        self.body_data={}
-        f.close()
+        path="body_parts.tsv"
+        with open(path,'r') as f:
+            self.body=[]
+            self.body_nums=[]
+            for row in f:
+                temp=row.split("\t")
+                self.body.append("=".join(temp))
+                self.body_nums.append(str(int(temp[0])))
+            self.body_data={}
 
-        path="/Users/Gavin/Desktop/U of C/MScBMI 33100/Final/NEISS/product_codes.tsv"
-        f=open(path)
-        self.prdcts=[]
-        self.prdct_nums=[]
-        for row in f:
-            temp=row.split("\t")
-            self.prdcts.append("=".join(temp))
-            self.prdct_nums.append(str(int(temp[0])))
-        self.prd_data={}
-        f.close()    
+        path="product_codes.tsv"
+        with open(path,'r') as f:
+            self.prdcts=[]
+            self.prdct_nums=[]
+            for row in f:
+                temp=row.split("\t")
+                self.prdcts.append("=".join(temp))
+                self.prdct_nums.append(str(int(temp[0])))
+            self.prd_data={}
         
-        self.nyears=[str(year) for year in range(1997,2018)]
+        self.nyears=[str(year) for year in range(self.firstyear,self.curyear)]
         self.nyears_data={}
         
-        
-    def varStates(self):           
-        self.years=[(code, var.get()) for code, var in self.nyears_data.items()]
-        self.loadFiles()
         
     def updateProgress(self, number, total):
         if(total==0):
@@ -151,43 +147,59 @@ class NEISS_Data_Requester(object):
             total=1
         value=int((number/total)*100)
         self.progress['value']=value
-        self.master.update_idletasks()
-        
+        self.master.update()
+
 #    Needed to remove this method because it take way too long... maybe multithread it?
     def updateProgress2(self, number, total):
         value=int((number/total)*100)
         self.progress2['value']=value
         self.master.update_idletasks()
-        
+
+    # Get a file based on a URL and cache it locally
+    # if already exists, we don't have to go to the web for it
+    def getFile(self,url):
+        filesize_r = requests.head(url)
+        size_b = int(filesize_r.headers['content-length'])
+        chunks = int(size_b / 1024)
+        local_filename = ".cache/"+url.split('/')[-1]
+        # Should check filesize here as well
+        if (    not os.path.isfile(local_filename)
+                or os.path.getsize(local_filename) != size_b
+            ):
+            self.progress_str.set("Downloading {0}".format(url.split('/')[-1]))
+            r = requests.get(url, stream=True)
+            if not os.path.exists(os.path.dirname(local_filename)):
+                os.makedirs(os.path.dirname(local_filename))
+            with open(local_filename,'wb') as f:
+                chunk_count = 0
+                for chunk in r.iter_content(chunk_size=1024):
+                    if chunk:
+                        f.write(chunk)
+                        chunk_count += 1
+                    if chunk_count % 1000 == 0:
+                        self.updateProgress(chunk_count,chunks)
+        return local_filename
+
     def loadFiles(self):
-        self.progress_str.set("Downloading Files")
         self.master.update_idletasks()
         self.data=[]
         years_down=[]
-        if(len(self.years)>0):
-            tot_years=0
-            for year in self.years:
-                if(year[1]==1):
-                    tot_years+=1
-            load_count=0
-            for i in range(len(self.years)):
-                if(self.years[i][1]==1):
-                    years_down.append(self.years[i][0])
-                    path=str('https://www.cpsc.gov/cgibin/NEISSQuery/Data/Archived%20Data/'+
-                          self.years[i][0]+'/neiss'+self.years[i][0]+'.tsv')
-#                    temp=[]
-# Example of the http:  https://raw.githubusercontent.com/gblyth/NEISS_GUI/master/Bin%20Files/NEISS_1998Q1.bin
-                    r=requests.get(path)
-                    r_data=r.text.split("\n")
-                    if(len(self.data)==0):
-                        for row in r_data:
-                            self.data.append(row.split("\t"))
-                    else:
-                        for row in range(1,len(r_data)):
-                            self.data.append(r_data[row].split("\t"))
-                    load_count+=1
-                    self.updateProgress(load_count,tot_years)
-        print("Years downloaded are:\n",years_down)
+
+        # Dictionary comprehension that reduces years to only the ones checked
+        years = {key:value for (key,value) in self.nyears_data.items() if value.get() == 1}
+        for year in years.keys():
+            self.progress_str.set("Loading {0}".format(year))
+            if self.nyears_data[year].get() == 1:
+                url = 'https://www.cpsc.gov/cgibin/NEISSQuery/Data/Archived%20Data/{0}/neiss{0}.tsv'.format(year)
+                filename = self.getFile(url)
+                r_data=open(filename,'r',encoding="ISO-8859-1").readlines()
+                if(len(self.data)==0):
+                    for row in r_data:
+                        self.data.append(row.split("\t"))
+                else:
+                    for row in range(1,len(r_data)):
+                        self.data.append(r_data[row].split("\t"))
+                years_down.append(year)
         self.data_loaded=True
         self.file_to_dl=True
 #        self.status_str.set("Status: Datasets Loaded="+str(self.data_loaded)+
@@ -195,6 +207,7 @@ class NEISS_Data_Requester(object):
 #                           "Years of Data Loaded="+str(years_down)+
 #                           "Number of Injury Events Loaded="+str(len(self.data)-1)+
 #                           "Number of Cases:"+str(self.num_cases)+" Number of Non-Cases:"+str(self.num_n_cases))
+        self.progress_str.set("Data loaded")
         self.data_years.set("Years of Data Loaded=\n"+str(years_down))
         self.data_events.set("Number of Injury Events Loaded=\n"+str(len(self.data)-1))
         self.load_str.set("Datasets Loaded=\n"+str(self.data_loaded))
@@ -264,7 +277,6 @@ class NEISS_Data_Requester(object):
         self.master.update_idletasks()
         
     def setFileName(self):
-        import os
         root=Tk()
         cmd = """osascript -e 'tell app "Finder" to set frontmost of process "Python" to true'"""
         os.system(cmd)
@@ -657,7 +669,7 @@ class NEISS_Data_Requester(object):
                 
     def makeGUI(self):
 
-        Button(self.master, text="Load Selected Data", command=self.varStates).grid(column=4, row=1)
+        Button(self.master, text="Load Selected Data", command=self.loadFiles).grid(column=4, row=1)
         Button(self.master, text="Download File", command=self.downloadFiles).grid(column=4, row=2)
         Button(self.master, text="Quit", command=self.master.destroy).grid(column=4, row=3)
         Label(self.master, textvariable=self.progress_str).grid(column=4, row=6)
@@ -775,10 +787,10 @@ class NEISS_Data_Requester(object):
         myear=Menubutton(self.master, text="Years of NEISS Data", relief=RAISED)
         myear.menu=Menu(myear, tearoff=0)
         myear["menu"]=myear.menu
-        for code in self.nyears:
+        for year in self.nyears:
             var=IntVar()
-            myear.menu.add_checkbutton(label=code, variable=var)
-            self.nyears_data[code]=var
+            myear.menu.add_checkbutton(label=year, variable=var)
+            self.nyears_data[year]=var
         
         m1.grid(column=3, row=3)
         m2.grid(column=3, row=4)
@@ -793,12 +805,10 @@ class NEISS_Data_Requester(object):
         myear.grid(column=1, row=1)
         
         mainloop()
-        
-master=Tk()
-neiss_GUI=NEISS_Data_Requester(master)
-neiss_GUI.makeGUI()
 
-
-
+if __name__ == "__main__":
+    master=Tk()
+    neiss_GUI=NEISS_Data_Requester(master)
+    neiss_GUI.makeGUI()
 
 
