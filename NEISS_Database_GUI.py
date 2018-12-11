@@ -14,6 +14,7 @@ from tkinter.filedialog import askdirectory
 from tkinter import simpledialog
 from tkinter import ttk
 import datetime
+import os
 
 class NEISS_Data_Requester(object):
     def __init__(self, master):
@@ -276,7 +277,6 @@ class NEISS_Data_Requester(object):
         self.master.update_idletasks()
         
     def setFileName(self):
-        import os
         root=Tk()
         cmd = """osascript -e 'tell app "Finder" to set frontmost of process "Python" to true'"""
         os.system(cmd)
