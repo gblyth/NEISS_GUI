@@ -107,38 +107,35 @@ class NEISS_Data_Requester(object):
         self.m6i6=IntVar()
         self.m6i7=IntVar()
 
-        path="/Users/Gavin/Desktop/U of C/MScBMI 33100/Final/NEISS/diagnosis.tsv"
-        f=open(path)
-        self.diag=[]
-        self.diag_nums=[]
-        for row in f:
-            temp=row.split("\t")
-            self.diag.append("=".join(temp))
-            self.diag_nums.append(str(int(temp[0])))
-        self.diag_data={}
-        f.close()
+        path="diagnosis.tsv"
+        with open(path,'r') as f:
+            self.diag=[]
+            self.diag_nums=[]
+            for row in f:
+                temp=row.split("\t")
+                self.diag.append("=".join(temp))
+                self.diag_nums.append(str(int(temp[0])))
+            self.diag_data={}
 
-        path="/Users/Gavin/Desktop/U of C/MScBMI 33100/Final/NEISS/body_parts.tsv"
-        f=open(path)
-        self.body=[]
-        self.body_nums=[]
-        for row in f:
-            temp=row.split("\t")
-            self.body.append("=".join(temp))
-            self.body_nums.append(str(int(temp[0])))
-        self.body_data={}
-        f.close()
+        path="body_parts.tsv"
+        with open(path,'r') as f:
+            self.body=[]
+            self.body_nums=[]
+            for row in f:
+                temp=row.split("\t")
+                self.body.append("=".join(temp))
+                self.body_nums.append(str(int(temp[0])))
+            self.body_data={}
 
-        path="/Users/Gavin/Desktop/U of C/MScBMI 33100/Final/NEISS/product_codes.tsv"
-        f=open(path)
-        self.prdcts=[]
-        self.prdct_nums=[]
-        for row in f:
-            temp=row.split("\t")
-            self.prdcts.append("=".join(temp))
-            self.prdct_nums.append(str(int(temp[0])))
-        self.prd_data={}
-        f.close()    
+        path="product_codes.tsv"
+        with open(path,'r') as f:
+            self.prdcts=[]
+            self.prdct_nums=[]
+            for row in f:
+                temp=row.split("\t")
+                self.prdcts.append("=".join(temp))
+                self.prdct_nums.append(str(int(temp[0])))
+            self.prd_data={}
         
         self.nyears=[str(year) for year in range(self.firstyear,self.curyear)]
         self.nyears_data={}
