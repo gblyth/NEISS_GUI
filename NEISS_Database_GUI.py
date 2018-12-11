@@ -207,6 +207,7 @@ class NEISS_Data_Requester(object):
 #                           "Years of Data Loaded="+str(years_down)+
 #                           "Number of Injury Events Loaded="+str(len(self.data)-1)+
 #                           "Number of Cases:"+str(self.num_cases)+" Number of Non-Cases:"+str(self.num_n_cases))
+        self.progress_str.set("Data loaded")
         self.data_years.set("Years of Data Loaded=\n"+str(years_down))
         self.data_events.set("Number of Injury Events Loaded=\n"+str(len(self.data)-1))
         self.load_str.set("Datasets Loaded=\n"+str(self.data_loaded))
