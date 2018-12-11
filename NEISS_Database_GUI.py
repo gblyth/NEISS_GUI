@@ -141,10 +141,6 @@ class NEISS_Data_Requester(object):
         self.nyears_data={}
         
         
-    def varStates(self):           
-        self.years=[(code, var.get()) for code, var in self.nyears_data.items()]
-        self.loadFiles()
-        
     def updateProgress(self, number, total):
         if(total==0):
             number=0
@@ -673,7 +669,7 @@ class NEISS_Data_Requester(object):
                 
     def makeGUI(self):
 
-        Button(self.master, text="Load Selected Data", command=self.varStates).grid(column=4, row=1)
+        Button(self.master, text="Load Selected Data", command=self.loadFiles).grid(column=4, row=1)
         Button(self.master, text="Download File", command=self.downloadFiles).grid(column=4, row=2)
         Button(self.master, text="Quit", command=self.master.destroy).grid(column=4, row=3)
         Label(self.master, textvariable=self.progress_str).grid(column=4, row=6)
