@@ -18,6 +18,8 @@ import os
 
 class NEISS_Data_Requester(object):
     def __init__(self, master):
+        self.firstyear = 1997
+        self.curyear = datetime.datetime.today().year
         self.years=[]
         self.data=[]
         self.case=[]
@@ -138,7 +140,7 @@ class NEISS_Data_Requester(object):
         self.prd_data={}
         f.close()    
         
-        self.nyears=[str(year) for year in range(1997,2018)]
+        self.nyears=[str(year) for year in range(self.firstyear,self.curyear)]
         self.nyears_data={}
         
         
