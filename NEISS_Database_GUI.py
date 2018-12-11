@@ -793,12 +793,10 @@ class NEISS_Data_Requester(object):
         myear.grid(column=1, row=1)
         
         mainloop()
-        
-master=Tk()
-neiss_GUI=NEISS_Data_Requester(master)
-neiss_GUI.makeGUI()
 
-
-
+if __name__ == "__main__":
+    master=Tk()
+    neiss_GUI=NEISS_Data_Requester(master)
+    neiss_GUI.makeGUI()
 
 
