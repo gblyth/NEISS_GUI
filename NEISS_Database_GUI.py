@@ -185,34 +185,25 @@ class NEISS_Data_Requester(object):
         return local_filename
 
     def loadFiles(self):
-        self.progress_str.set("Downloading Files")
         self.master.update_idletasks()
         self.data=[]
         years_down=[]
-        if(len(self.years)>0):
-            tot_years=0
-            for year in self.years:
-                if(year[1]==1):
-                    tot_years+=1
-            load_count=0
-            for i in range(len(self.years)):
-                if(self.years[i][1]==1):
-                    years_down.append(self.years[i][0])
-                    path=str('https://www.cpsc.gov/cgibin/NEISSQuery/Data/Archived%20Data/'+
-                          self.years[i][0]+'/neiss'+self.years[i][0]+'.tsv')
-#                    temp=[]
-# Example of the http:  https://raw.githubusercontent.com/gblyth/NEISS_GUI/master/Bin%20Files/NEISS_1998Q1.bin
-                    r=requests.get(path)
-                    r_data=r.text.split("\n")
-                    if(len(self.data)==0):
-                        for row in r_data:
-                            self.data.append(row.split("\t"))
-                    else:
-                        for row in range(1,len(r_data)):
-                            self.data.append(r_data[row].split("\t"))
-                    load_count+=1
-                    self.updateProgress(load_count,tot_years)
-        print("Years downloaded are:\n",years_down)
+
+        # Dictionary comprehension that reduces years to only the ones checked
+        years = {key:value for (key,value) in self.nyears_data.items() if value.get() == 1}
+        for year in years.keys():
+            self.progress_str.set("Loading {0}".format(year))
+            if self.yearchecks[year].get() == 1:
+                url = 'https://www.cpsc.gov/cgibin/NEISSQuery/Data/Archived%20Data/{0}/neiss{0}.tsv'.format(year)
+                filename = self.getFile(url)
+                r_data=open(filename,'r',encoding="ISO-8859-1").readlines()
+                if(len(self.data)==0):
+                    for row in r_data:
+                        self.data.append(row.split("\t"))
+                else:
+                    for row in range(1,len(r_data)):
+                        self.data.append(r_data[row].split("\t"))
+                years_down.append(year)
         self.data_loaded=True
         self.file_to_dl=True
 #        self.status_str.set("Status: Datasets Loaded="+str(self.data_loaded)+
