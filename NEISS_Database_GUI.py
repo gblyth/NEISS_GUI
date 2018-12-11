@@ -151,8 +151,8 @@ class NEISS_Data_Requester(object):
             total=1
         value=int((number/total)*100)
         self.progress['value']=value
-        self.master.update_idletasks()
-        
+        self.master.update()
+
 #    Needed to remove this method because it take way too long... maybe multithread it?
     def updateProgress2(self, number, total):
         value=int((number/total)*100)
