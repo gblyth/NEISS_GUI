@@ -7,7 +7,8 @@ Created on Tue Dec  4 21:11:07 2018
 """
 
 
-
+import calendar
+import sys
 import requests
 from tkinter import *
 from tkinter.filedialog import askdirectory
@@ -44,8 +45,11 @@ class NEISS_Data_Requester(object):
         self.progress_str=StringVar()
         self.progress_str.set("Ready")
         ### Dates
-        self.entry1=StringVar()
-        self.entry1.set("(MM/DD/YYYY)or(MM/DD/YYYY-MM/DD/YYYY)")
+        self.date1=[]
+        self.date1_label=StringVar()
+        self.date1_label.set("Choose Date(s)")
+#        self.entry1=StringVar()
+#        self.entry1.set("(MM/DD/YYYY)or(MM/DD/YYYY-MM/DD/YYYY)")
         ### Age
         self.entry2=StringVar()
         self.entry2.set("singlular(#) or range(#-#)")
@@ -288,31 +292,34 @@ class NEISS_Data_Requester(object):
     
     def downloadFiles(self):
         place=askdirectory()
-        print("Place=",place)
-        name=self.setFileName()
-        if(type(name)==str):
-            name=name.split(" ")
-            name="_".join(name)
-            print("Name=",name)
-            path=place+"/"+name
-            print("File path=\n",path)
-
-            output_file=open(str(str(place)+"/"+str(name)+".tsv"), 'w')
-
-            if(len(self.case)>0):
-                for row in range(len(self.data)):
-                    output_file.write("\t".join(self.data[row])+"\t"+str(self.case[row])+"\n")
-            else:
-                for row in self.data:
-                    output_file.write("\t".join(row)+"\n")
-            output_file.close()
+#        print("Place=",place)
+        if(place!=""):
+            name=self.setFileName()
+            if(type(name)==str):
+                name=name.split(" ")
+                name="_".join(name)
+#                print("Name=",name)
+                path=place+"/"+name
+                print("File path=\n",path)
+    
+                output_file=open(str(str(place)+"/"+str(name)+".tsv"), 'w')
+    
+                if(len(self.case)>0):
+                    for row in range(len(self.data)):
+                        output_file.write("\t".join(self.data[row])+"\t"+str(self.case[row])+"\n")
+                else:
+                    for row in self.data:
+                        output_file.write("\t".join(row)+"\n")
+                output_file.close()
 
     
     def clearCase(self):
         self.case=[]
         self.num_cases=0
         self.num_n_cases=0
-        self.entry1.set("(MM/DD/YYYY)or(MM/DD/YYYY-MM/DD/YYYY)")
+#        self.entry1.set("(MM/DD/YYYY)or(MM/DD/YYYY-MM/DD/YYYY)")
+        self.date1=[]
+        self.date1_label.set("Choose Date(s)")
         self.entry2.set("singlular(#) or range(#-#)")
         self.entry14.set("Enter as: Word1,Word2,ect...")
         self.entry16.set("Enter as: 1,2,3,...,100")
@@ -385,29 +392,14 @@ class NEISS_Data_Requester(object):
         check=[]
         for i in range(16):
             check.append([])
-        e1=str(self.entry1.get())
+#        e1=str(self.entry1.get())
         e2=str(self.entry2.get())
         e14=str(self.entry14.get())
         e16=str(self.entry16.get())
-        if(e1!="(MM/DD/YYYY)or(MM/DD/YYYY-MM/DD/YYYY)" and e1!=""):
-            temp=e1.split("-")
-            if(len(temp)==2):
-                try:
-                    checkit=datetime.datetime.strptime(temp[0], '%m/%d/%Y')
-                    try:
-                        checkit=datetime.datetime.strptime(temp[1], '%m/%d/%Y')
-                        check[0]=e1.split("-")
-                    except ValueError:
-                        print("Dates Entered Incorrrectly")
-                except ValueError:
-                    print("Dates Entered Incorrrectly")
-            elif(len(temp)==1):
-                try:
-                    checkit=datetime.datetime.strptime(temp[0], '%m/%d/%Y')
-                    check[0]=e1
-                except ValueError:
-                    print("Dates Entered Incorrrectly")
-#            check[0]=e1.split("-")
+        if(len(self.date1)==2):
+            check[0]=self.date1
+        if(len(self.date1)==1):
+            check[0]=self.date1[0]
         if(e2!="singlular(#) or range(#-#)" and e2!=""):
             temp=e2.split("-")
             if(len(temp)==1):
@@ -664,6 +656,285 @@ class NEISS_Data_Requester(object):
         self.case_num.set("Number of Cases:"+str(self.num_cases)+" Number of Non-Cases:"+str(self.num_n_cases))
         self.master.update_idletasks()
                     
+        
+    def popup(self):
+        child = Toplevel(self.master)
+        self.newWindow(child)
+        
+    def printDate(self):
+        print("self.date1:",self.date1)
+        
+    def newWindow(self, parent):
+        self.values = {}
+        self.parent = parent
+        self.cal = calendar.TextCalendar(calendar.SUNDAY)
+        self.year = datetime.date.today().year
+        self.month = datetime.date.today().month
+        self.wid = []
+        day=datetime.date.today().day
+        self.day_selected = day
+        self.month_selected = self.month
+        self.year_selected = self.year
+        self.day_name = ''
+        self.date_label="Date:"
+        
+        self.startMenu()
+         
+        
+    def startMenu(self):
+        single_btn = Button(self.parent, text='Single Date',command=self.popupSingle)
+        self.wid.append(single_btn)
+        range_btn = Button(self.parent, text='Date Range',command=self.popupRange)
+        self.wid.append(range_btn)
+        cancel_btn = Button(self.parent, text='Cancel',command=self.kill)
+        self.wid.append(cancel_btn)
+        single_btn.grid()
+        range_btn.grid()
+        cancel_btn.grid()
+        self.values = {}
+             
+    def popupSingle(self):
+        self.values={}
+        self.step="single"
+        self.clear()
+        self.setup(self.year, self.month)
+
+    def popupRange(self):
+        self.values={}
+        self.step="start"
+        self.clear()
+        self.setup(self.year, self.month)
+        
+    def kill(self):
+        self.values={}
+        self.parent.destroy()
+        
+         
+    def clear(self):
+        for w in self.wid[:]:
+            w.grid_forget()
+            self.wid.remove(w)
+     
+    def go_prev(self):
+        if self.month > 1:
+            self.month -= 1
+        else:
+            self.month = 12
+            self.year -= 1
+        self.clear()
+        self.setup(self.year, self.month)
+     
+    def go_prev_year(self):
+        if self.year > 0:
+            self.year -= 1
+        self.clear()
+        self.setup(self.year, self.month)
+ 
+    def go_next(self):
+        if self.month < 12:
+            self.month += 1
+        else:
+            self.month = 1
+            self.year += 1
+         
+        self.clear()
+        self.setup(self.year, self.month)
+     
+    def go_next_year(self):
+        if self.year > 0:
+            self.year += 1
+        self.clear()
+        self.setup(self.year, self.month)
+         
+    def selection(self, day, name):
+        if(self.step=="single"):
+            self.day_selected = day
+            self.month_selected = self.month
+            self.year_selected = self.year
+            self.day_name = name
+
+            #data
+            self.values['day_selected'] = day
+            self.values['month_selected'] = self.month
+            self.values['year_selected'] = self.year
+            self.values['day_name'] = name
+            self.values['month_name'] = calendar.month_name[self.month_selected]
+
+            self.clear()
+            self.setup(self.year, self.month)
+            
+        elif(self.step=="start"):
+            self.day_selected = day
+            self.month_selected = self.month
+            self.year_selected = self.year
+            self.day_name = name
+
+            #data
+            self.values['start']={}
+            self.values['start']['day_selected'] = day
+            self.values['start']['month_selected'] = self.month
+            self.values['start']['year_selected'] = self.year
+            self.values['start']['day_name'] = name
+            self.values['start']['month_name'] = calendar.month_name[self.month_selected]
+
+            self.clear()
+            self.setup(self.year, self.month)
+            
+        elif(self.step=="end"):
+            self.day_selected = day
+            self.month_selected = self.month
+            self.year_selected = self.year
+            self.day_name = name
+
+            #data
+            self.values['end']={}
+            self.values['end']['day_selected'] = day
+            self.values['end']['month_selected'] = self.month
+            self.values['end']['year_selected'] = self.year
+            self.values['end']['day_name'] = name
+            self.values['end']['month_name'] = calendar.month_name[self.month_selected]
+            
+            self.step="end"
+
+            self.clear()
+            self.setup(self.year, self.month)
+         
+    def setup(self, y, m):
+        
+        year_left = Button(self.parent, text='<<<', command=self.go_prev_year)
+        self.wid.append(year_left)
+        left = Button(self.parent, text='<', command=self.go_prev)
+        self.wid.append(left)
+        year_left.grid(row=0, column=1)
+        left.grid(row=0, column=2)
+
+        header = Label(self.parent, height=2, text='{}   {}'.format(calendar.month_abbr[m], str(y)))
+        self.wid.append(header)
+        header.grid(row=0, column=3, columnspan=3)
+
+        right = Button(self.parent, text='>', command=self.go_next)
+        year_right = Button(self.parent, text='>>>', command=self.go_next_year)
+        self.wid.append(year_right)
+        self.wid.append(right)
+        right.grid(row=0, column=6)
+        year_right.grid(row=0, column=7)
+
+        days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday']
+        for num, name in enumerate(days):
+            t = Label(self.parent, text=name[:3])
+            self.wid.append(t)
+            t.grid(row=1, column=num+1)
+
+        for w, week in enumerate(self.cal.monthdayscalendar(y, m), 2):
+            for d, day in enumerate(week):
+                if day:
+                    b = Button(self.parent, width=1, text=day, command=lambda day=day:self.selection(day, calendar.day_name[(day-1) % 7]))
+                    self.wid.append(b)
+                    b.grid(row=w, column=d+1)
+        ### Set date label for a single day
+        if(self.step=="single"):
+            sel = Label(self.parent, height=2, text='Date: {} {} {}'.format(
+                calendar.month_name[self.month_selected], self.day_selected, self.year_selected))
+        ### Set date label for the starting day in a range
+        elif(self.step=="start"):
+            sel = Label(self.parent, height=2, text='Start Date: {} {} {}'.format(
+                calendar.month_name[self.month_selected], self.day_selected, self.year_selected)+
+                          '\nEnd Date:')
+        ### Set date label for the ending day in a range
+        elif(self.step=="end"):
+            sel = Label(self.parent, height=2, text='Start Date: {} {} {}'.format(
+                self.values['start']['month_name'],
+                self.values['start']['day_selected'],
+                self.values['start']['year_selected'])+
+                           '\nEnd Date: {} {} {}'.format(calendar.month_name[self.month_selected],
+                                                         self.day_selected,
+                                                         self.year_selected))
+    
+        self.wid.append(sel)
+        sel.grid(row=8, column=1, columnspan=7)
+
+        ok = Button(self.parent, width=5, text='OK', command=self.checkOK)
+        self.wid.append(ok)
+        ok.grid(row=9, column=2, columnspan=3, pady=10)
+
+        cancel = Button(self.parent, width=5, text='Cancel', command=self.checkCancel)
+        self.wid.append(cancel)
+        cancel.grid(row=9, column=5, columnspan=3, pady=10)
+         
+    def checkOK(self):
+        if(self.step=="single" or self.step=="end"):
+            self.kill_and_save()
+            self.submitDate(self.values)
+        elif(self.step=="start"):
+            self.step="end"
+            self.clear()
+            self.setup(self.year, self.month)
+        
+    def checkCancel(self):
+        if(self.step=="single" or self.step=="start"):
+            self.values={}
+            self.clear()
+            self.startMenu()
+#            self.kill_and_save()
+        elif(self.step=="end"):
+            self.step="start"
+            self.clear()
+            self.setup(self.year, self.month)
+            
+    def kill_and_save(self):
+        self.parent.destroy()
+        
+    def submitDate(self, value):
+        self.date1=[]
+        temp=value
+        label=[]
+        if(len(temp)==2):
+            temp1=[str(temp['start']['month_selected']),
+                   str(temp['start']['day_selected']),
+                   str(temp['start']['year_selected'])]
+            if(len(temp1[0])==1):
+                temp1[0]='0'+temp1[0]
+            if(len(temp1[1])==1):
+                temp1[1]='0'+temp1[1]
+            temp1="/".join(temp1)
+            label.append(temp1)
+            temp2=[str(temp['end']['month_selected']),
+                   str(temp['end']['day_selected']),
+                   str(temp['end']['year_selected'])]
+            if(len(temp2[0])==1):
+                temp2[0]='0'+temp2[0]
+            if(len(temp2[1])==1):
+                temp2[1]='0'+temp2[1]
+            temp2="/".join(temp2)
+            label.append(temp2)
+            
+            temp1=datetime.datetime.strptime(temp1, '%m/%d/%Y')
+            temp2=datetime.datetime.strptime(temp2, '%m/%d/%Y')
+            if(temp1>temp2):
+                self.date1=[label[1], label[0]]
+            else:
+                self.date1=label
+                
+        elif(len(temp)>0):
+            temp1=[str(temp['month_selected']),
+                   str(temp['day_selected']),
+                   str(temp['year_selected'])]
+            if(len(temp1[0])==1):
+                temp1[0]='0'+temp1[0]
+            if(len(temp1[1])==1):
+                temp1[1]='0'+temp1[1]
+            temp1="/".join(temp1)
+            label.append(temp1)
+            temp1=datetime.datetime.strptime(temp1, '%m/%d/%Y')
+            self.date1=label
+
+        if(len(self.date1)==2):
+            self.date1_label.set("Start Date:"+self.date1[0]+"\nEnd Date:"+self.date1[1])
+        elif(len(self.date1)==1):
+            self.date1_label.set("Date:"+self.date1[0])
+        self.master.update_idletasks()
+        
+                
                 
                 
                 
@@ -691,7 +962,7 @@ class NEISS_Data_Requester(object):
         Label(self.master, text="Narrative Field").grid(column=2, row=11)
         Label(self.master, text="Stratum").grid(column=2, row=12)
         Label(self.master, text="PSU").grid(column=2, row=13)
-        Entry(self.master, textvariable=self.entry1, width=34).grid(column=3, row=1)
+        self.choose_btn = Button(self.master, textvariable=self.date1_label,command=self.popup).grid(column=3, row=1)
         Entry(self.master, textvariable=self.entry2, width=34).grid(column=3, row=2)
         Entry(self.master, textvariable=self.entry14, width=34).grid(column=3, row=11)
         Entry(self.master, textvariable=self.entry16, width=34).grid(column=3, row=13)
